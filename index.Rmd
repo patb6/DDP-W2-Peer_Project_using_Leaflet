@@ -36,7 +36,7 @@ The CDC data contains several US territories not covered by the JSON map.  The C
 manually cleaned for expediency.  The JSON map use contained a dataset with population density.  The variables in the CDC data were added to the dataframe inside JSON map.
 
 * A simple "Blues" pallet was used to color code the states based upon the reported cases.  
-* Labels were added to eac state with the reported numbers and the states CDC site.  
+* Labels were added and the user can mouse over a state and see cases and the State's CDC site.  
 * A legend was added for a macro understanding of the cases reported.  
 
 ```{r CDC_Data, echo= FALSE}
