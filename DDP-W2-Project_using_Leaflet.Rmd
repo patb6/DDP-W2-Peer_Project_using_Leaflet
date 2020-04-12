@@ -1,0 +1,94 @@
+---
+title: "DDP Using Leaflet"
+author: "Patrick Brooks"
+date: "4/12/2020"
+output: html_document
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(leaflet)
+library(maps)
+library(dplyr)
+library(geojsonio)
+
+# Download the jason version of a US map
+#   help iwith US Map https://github.com/rstudio/leaflet/issues/498
+states <- geojson_read( 
+           x = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json", 
+           what = "sp")
+
+
+
+
+```
+
+# Project Purpose
+
+The United States Centers for Disease Control (CDC) provides a simple CSV file 
+of reported [COVID-19](https://www.cdc.gov/coronavirus/2019-ncov/cases-updates/cases-in-us.html).  cases.  The data table contains the state, recorded cases, the state CDC page.  This exercise will use Leaflet to produce an interactive map of this data.  
+The code used in this exercise is based in part on a [leaflet example](https://rstudio.github.io/leaflet/choropleths.html).  
+
+# Methodology
+The CDC data contains several US territories not covered by the JSON map.  The CDC data was
+manually cleaned for expediency.  The JSON map use contained a dataset with population density.  The variables in the CDC data were added to the dataframe inside JSON map.
+
+* A simple "Blues" pallet was used to color code the states based upon the reported cases.  
+* Labels were added to eac state with the reported numbers and the states CDC site.  
+* A legend was added for a macro understanding of the cases reported.  
+
+```{r CDC_Data, echo= FALSE}
+d_states = data.frame(readxl::read_xlsx("orgStates Reporting Cases of COVID-19 to CDC.xlsx"))
+
+sp_states = states
+# Add CDC data to json map
+sp_states$cases = d_states$Cases.Reported[sp_states$name == d_states$Jurisdiction]
+sp_states$URL   = d_states$URL[sp_states$name == d_states$Jurisdiction]
+bins <- c(0, 500, 1000, 5000, 10000, 50000, 100000, Inf)
+pal <- colorBin("Blues", domain = sp_states$cases, bins = bins)
+
+labels <- sprintf(
+        "<strong>%s</strong><br/>%g people<br>%s",
+        sp_states$name, sp_states$cases,sp_states$URL) %>% lapply(htmltools::HTML)
+
+
+l_us = leaflet(sp_states) %>% addTiles() %>% setView(-111.656944, 34.29, zoom = 4)
+
+
+l_us = l_us %>% addPolygons(
+        fillColor = pal(sp_states$cases),
+        weight = 2,
+        opacity = 1,
+        color = "white",
+        dashArray = "3",
+        fillOpacity = 0.7,
+        highlight = highlightOptions(
+                weight = 5,
+                color = "#666",
+                dashArray = "",
+                fillOpacity = 0.7,
+                bringToFront = TRUE),
+        label = labels,
+        labelOptions = labelOptions(
+                style = list("font-weight" = "normal", padding = "3px 8px"),
+                textsize = "15px",
+                direction = "auto"))
+
+l_us %>% addLegend(pal = pal, values = ~cases, opacity = 0.7, 
+                 title = "US Reported Covid19 cases 04/10/2020", position = "bottomright")
+         
+```
+
+# Summary & code listing
+
+This project demonstrates that creating simple interactive spacial maps can be accomplished
+with a a little creative effor.  Below is the code that generated the graphic.
+
+
+```{r code_inclusion, ref.label=knitr::all_labels(), echo = TRUE, eval = FALSE}
+
+```
+
+
